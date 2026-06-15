@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>千幸 仕込み記録</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+  :root {
+    --bg:      #f5f5f5;
+    --white:   #ffffff;
+    --ink:     #1c1c1c;
+    --sub:     #555555;
+    --border:  #d0d0d0;
+    --active:  #2563EB;
+    --ok:      #16a34a;
+    --warn:    #dc2626;
+    --nav-bg:  #1c1c1c;
+    --nav-act: #f59e0b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 17px;
+    line-height: 1.5;
+    padding-bottom: 80px;
+  }
+
+  /* ── ヘッダー ── */
+  header {
+    background: var(--nav-bg);
+    color: #fff;
+    padding: 18px 20px 14px;
+  }
+  header h1 { font-size: 20px; font-weight: 700; letter-spacing: 0.06em; }
+  header p  { font-size: 13px; color: var(--nav-act); margin-top: 2px; }
+
+  /* ── タブナビ ── */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--nav-bg);
+    display: flex;
+    border-top: 1px solid #333;
+  }
+  nav a {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 52px;
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none;
+    color: #888;
+    letter-spacing: 0.04em;
+  }
+  nav a.active { color: var(--nav-act); border-bottom: 3px solid var(--nav-act); }
+
+  /* ── メイン ── */
+  main { max-width: 520px; margin: 0 auto; padding: 20px 16px; }
+
+  /* ── ブロック ── */
+  .block {
+    background: var(--white);
+    border-radius: 12px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+  .block-head {
+    background: #f0f0f0;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--sub);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  .block-body { padding: 16px; }
+
+  /* ── ラベル + インプット ── */
+  .field { margin-bottom: 16px; }
+  .field:last-child { margin-bottom: 0; }
+
+  .field-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--sub);
+    margin-bottom: 6px;
+  }
+
+  input[type="date"],
+  input[type="time"],
+  input[type="number"],
+  select,
+  textarea {
+    width: 100%;
+    min-height: 52px;
+    background: #fafafa;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--ink);
+    appearance: none;
+    -webkit-appearance: none;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--active);
+    background: #fff;
+  }
+  textarea { min-height: 80px; resize: vertical; font-size: 16px; }
+
+  /* ── 日時 2列 ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* ── 天気表示 ── */
+  .weather-box {
+    background: #f8faff;
+    border: 2px solid #c7d9f8;
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .weather-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+  }
+  .weather-row + .weather-row { border-top: 1px solid #e0eaff; }
+  .wkey { font-size: 14px; color: var(--sub); }
+  .wval { font-size: 22px; font-weight: 700; color: #1e40af; }
+  .wfetch { text-align: center; color: var(--sub); font-size: 14px; padding: 8px 0; }
+
+  /* ── 小麦 3列 ── */
+  .wheat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .wheat-item { text-align: center; }
+  .wheat-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--sub);
+    margin-bottom: 6px;
+  }
+  .wheat-item input {
+    text-align: center;
+    font-size: 26px;
+    font-weight: 700;
+    padding: 14px 4px;
+  }
+  .wheat-hint { font-size: 12px; color: #999; margin-top: 4px; }
+
+  /* ── 合計バー ── */
+  .total-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 14px;
+    padding: 12px 16px;
+    background: #f5f5f5;
+    border-radius: 10px;
+    border: 2px solid var(--border);
+  }
+  .total-label { font-size: 15px; font-weight: 700; color: var(--sub); }
+  .total-num   { font-size: 26px; font-weight: 700; }
+  .total-num.ok   { color: var(--ok); }
+  .total-num.warn { color: var(--warn); }
+  .total-num.dim  { color: #bbb; }
+  .total-warn {
+    display: none;
+    margin-top: 8px;
+    font-size: 14px;
+    color: var(--warn);
+    font-weight: 500;
+  }
+
+  /* ── 加水 ── */
+  .water-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: end; }
+  .water-result {
+    background: #f0fdf4;
+    border: 2px solid #86efac;
+    border-radius: 10px;
+    padding: 12px 14px;
+    min-height: 52px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .wr-label { font-size: 12px; font-weight: 700; color: #166534; margin-bottom: 2px; }
+  .wr-val   { font-size: 24px; font-weight: 700; color: #15803d; }
+  .wr-unit  { font-size: 12px; color: #4ade80; }
+
+  /* ── 送信ボタン ── */
+  .btn-submit {
+    display: block;
+    width: 100%;
+    min-height: 60px;
+    background: var(--active);
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 19px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    box-shadow: 0 3px 10px rgba(37,99,235,0.35);
+  }
+  .btn-submit:active { background: #1d4ed8; transform: scale(0.98); }
+  .btn-submit:disabled { background: #9ca3af; box-shadow: none; }
+
+  .btn-note {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--sub);
+  }
+
+  /* ── トースト ── */
+  #toast {
+    position: fixed;
+    bottom: 28px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--ok);
+    color: #fff;
+    padding: 14px 28px;
+    border-radius: 30px;
+    font-size: 16px;
+    font-weight: 700;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 200;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #toast.err  { background: var(--warn); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>千幸　仕込み記録</h1>
+  <p>さぬきうどん千幸　東川町</p>
+</header>
+
+<nav>
+  <a href="index.html" class="active">📋 仕込み記録</a>
+  <a href="hyoka.html">⭐ 評価入力</a>
+  <a href="kiroku.html">📖 記録閲覧</a>
+</nav>
+
+<main>
+
+  <!-- 仕込み日時 -->
+  <div class="block">
+    <div class="block-head">① 仕込み日時</div>
+    <div class="block-body">
+      <div class="two-col">
+        <div class="field">
+          <label class="field-label">日付</label>
+          <input type="date" id="shimikomiDate">
+        </div>
+        <div class="field">
+          <label class="field-label">時刻</label>
+          <input type="time" id="shimikomiTime" value="18:00">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 室内環境 -->
+  <div class="block">
+    <div class="block-head">② 仕込み室内の環境</div>
+    <div class="block-body">
+      <div class="two-col">
+        <div class="field">
+          <label class="field-label">室内温度（℃）</label>
+          <input type="number" id="roomTemp" placeholder="22" step="0.5" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label class="field-label">室内湿度（%）</label>
+          <input type="number" id="roomHumidity" placeholder="65" step="1" min="0" max="100" inputmode="numeric">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 外気（自動） -->
+  <div class="block">
+    <div class="block-head">③ 外気温・外湿度（自動取得）</div>
+    <div class="block-body">
+      <div class="weather-box" id="weatherBlock">
+        <div class="wfetch">日時を入力すると自動で表示されます</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 小麦配合 -->
+  <div class="block">
+    <div class="block-head">④ 小麦の配合（ノートの数字をそのまま入力）</div>
+    <div class="block-body">
+      <div class="wheat-grid">
+        <div class="wheat-item">
+          <div class="wheat-name">一番粉</div>
+          <input type="number" id="w1" placeholder="360" min="0" max="999" inputmode="numeric">
+          <div class="wheat-hint">×10g</div>
+        </div>
+        <div class="wheat-item">
+          <div class="wheat-name">舞雪</div>
+          <input type="number" id="w2" placeholder="200" min="0" max="999" inputmode="numeric">
+          <div class="wheat-hint">×10g</div>
+        </div>
+        <div class="wheat-item">
+          <div class="wheat-name">夢</div>
+          <input type="number" id="w3" placeholder="40" min="0" max="999" inputmode="numeric">
+          <div class="wheat-hint">×10g</div>
+        </div>
+      </div>
+      <div class="total-bar">
+        <span class="total-label">合計</span>
+        <span class="total-num dim" id="totalDisplay">— g</span>
+      </div>
+      <div class="total-warn" id="totalWarn">⚠️ 合計が 6,000g ではありません。このまま記録できます。</div>
+    </div>
+  </div>
+
+  <!-- 加水 -->
+  <div class="block">
+    <div class="block-head">⑤ 加水率</div>
+    <div class="block-body">
+      <div class="water-row">
+        <div class="field" style="margin-bottom:0">
+          <label class="field-label">加水率を選ぶ</label>
+          <select id="waterRate"></select>
+        </div>
+        <div class="water-result">
+          <div class="wr-label">加水量（×10ml）</div>
+          <div>
+            <span class="wr-val" id="waterAmountDisplay">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 塩分 -->
+  <div class="block">
+    <div class="block-head">⑥ 塩分率</div>
+    <div class="block-body">
+      <div class="field" style="margin-bottom:0">
+        <label class="field-label">塩分率を選ぶ</label>
+        <select id="saltRate"></select>
+      </div>
+    </div>
+  </div>
+
+  <!-- メモ -->
+  <div class="block">
+    <div class="block-head">メモ（任意）</div>
+    <div class="block-body">
+      <textarea id="memo" placeholder="気になったことを自由に書いてください"></textarea>
+    </div>
+  </div>
+
+  <!-- 送信 -->
+  <button class="btn-submit" id="submitBtn" onclick="submitForm()">
+    仕込みを記録する
+  </button>
+  <p class="btn-note">記録後、翌日から「評価入力」で評価を追加できます</p>
+
+</main>
+
+<div id="toast"></div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbycFZCVpdYE7GQE4OlPZjZsD3z47ziV-U5uZmLlypqVNxiRLzR9Q5yQ38OxYTMdZ1bIrQ/exec';
+const HIGASHIKAWA = { lat: 43.695, lon: 142.483 };
+
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('shimikomiDate').value = formatDate(new Date());
+
+  const waterSel = document.getElementById('waterRate');
+  waterSel.innerHTML = '<option value="">選んでください</option>';
+  for (let v = 45; v <= 55; v += 0.5) {
+    const o = document.createElement('option');
+    o.value = v; o.textContent = v.toFixed(1) + '%';
+    if (v === 47) o.selected = true;
+    waterSel.appendChild(o);
+  }
+
+  const saltSel = document.getElementById('saltRate');
+  saltSel.innerHTML = '<option value="">選んでください</option>';
+  for (let v = 10; v <= 20; v++) {
+    const o = document.createElement('option');
+    o.value = v; o.textContent = v + '%';
+    if (v === 14) o.selected = true;
+    saltSel.appendChild(o);
+  }
+
+  document.getElementById('shimikomiDate').addEventListener('change', fetchWeather);
+  document.getElementById('shimikomiTime').addEventListener('change', fetchWeather);
+  document.getElementById('waterRate').addEventListener('change', updateWater);
+  ['w1','w2','w3'].forEach(id => document.getElementById(id).addEventListener('input', () => { updateTotal(); updateWater(); }));
+
+  updateWater();
+  fetchWeather();
+});
+
+function formatDate(d) { return d.toISOString().split('T')[0]; }
+
+function updateTotal() {
+  const v1 = +document.getElementById('w1').value || 0;
+  const v2 = +document.getElementById('w2').value || 0;
+  const v3 = +document.getElementById('w3').value || 0;
+  const totalG = (v1 + v2 + v3) * 10;
+  const disp = document.getElementById('totalDisplay');
+  const warn = document.getElementById('totalWarn');
+  if (!v1 && !v2 && !v3) {
+    disp.textContent = '— g'; disp.className = 'total-num dim';
+    warn.style.display = 'none'; return;
+  }
+  disp.textContent = totalG.toLocaleString() + ' g';
+  if (totalG === 6000) {
+    disp.className = 'total-num ok'; warn.style.display = 'none';
+  } else {
+    disp.className = 'total-num warn'; warn.style.display = 'block';
+  }
+}
+
+function updateWater() {
+  const rate = +document.getElementById('waterRate').value;
+  const v1 = +document.getElementById('w1').value || 0;
+  const v2 = +document.getElementById('w2').value || 0;
+  const v3 = +document.getElementById('w3').value || 0;
+  const totalG = (v1 + v2 + v3) * 10;
+  const disp = document.getElementById('waterAmountDisplay');
+  if (!rate || totalG === 0) { disp.textContent = '—'; return; }
+  disp.textContent = Math.round(totalG * rate / 100 / 10);
+}
+
+async function fetchWeather() {
+  const date = document.getElementById('shimikomiDate').value;
+  const time = document.getElementById('shimikomiTime').value;
+  if (!date || !time) return;
+  const block = document.getElementById('weatherBlock');
+  block.innerHTML = '<div class="wfetch">取得中…</div>';
+  const hour = parseInt(time.split(':')[0]);
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${HIGASHIKAWA.lat}&longitude=${HIGASHIKAWA.lon}&hourly=temperature_2m,relative_humidity_2m&timezone=Asia%2FTokyo&start_date=${date}&end_date=${date}`;
+    const data = await (await fetch(url)).json();
+    const temp = data.hourly.temperature_2m[hour];
+    const hum  = data.hourly.relative_humidity_2m[hour];
+    window._wTemp = temp; window._wHum = hum;
+    block.innerHTML = `
+      <div class="weather-row">
+        <span class="wkey">🌡 外気温（${time}時点）</span>
+        <span class="wval">${temp != null ? temp.toFixed(1) : '—'} ℃</span>
+      </div>
+      <div class="weather-row">
+        <span class="wkey">💧 外湿度（${time}時点）</span>
+        <span class="wval">${hum != null ? hum : '—'} %</span>
+      </div>`;
+  } catch(e) {
+    block.innerHTML = '<div class="wfetch">⚠️ 取得できませんでした（通信を確認してください）</div>';
+    window._wTemp = null; window._wHum = null;
+  }
+}
+
+async function submitForm() {
+  const date  = document.getElementById('shimikomiDate').value;
+  const time  = document.getElementById('shimikomiTime').value;
+  const w1    = document.getElementById('w1').value;
+  const w2    = document.getElementById('w2').value;
+  const w3    = document.getElementById('w3').value;
+  const water = document.getElementById('waterRate').value;
+  const salt  = document.getElementById('saltRate').value;
+
+  if (!date || !time)     { showToast('日時を入力してください', true); return; }
+  if (!w1 && !w2 && !w3) { showToast('小麦の配合を入力してください', true); return; }
+  if (!water)             { showToast('加水率を選んでください', true); return; }
+  if (!salt)              { showToast('塩分率を選んでください', true); return; }
+
+  const totalG = ((+w1||0)+(+w2||0)+(+w3||0))*10;
+  const payload = {
+    action:'shimikomi', date, time,
+    roomTemp: document.getElementById('roomTemp').value,
+    roomHum:  document.getElementById('roomHumidity').value,
+    outsideTemp: window._wTemp ?? '', outsideHum: window._wHum ?? '',
+    w1:(+w1||0)*10, w2:(+w2||0)*10, w3:(+w3||0)*10, totalG,
+    waterRate: water, waterMl: Math.round(totalG*(+water)/100),
+    saltRate: salt,
+    memo: document.getElementById('memo').value,
+    submittedAt: new Date().toISOString()
+  };
+
+  const btn = document.getElementById('submitBtn');
+  btn.textContent = '記録中…'; btn.disabled = true;
+  try {
+    await fetch(GAS_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    showToast('✅ 仕込みを記録しました');
+    setTimeout(() => {
+      ['w1','w2','w3','roomTemp','roomHumidity','memo'].forEach(id => document.getElementById(id).value='');
+      document.getElementById('totalDisplay').textContent='— g';
+      document.getElementById('totalDisplay').className='total-num dim';
+      document.getElementById('totalWarn').style.display='none';
+      document.getElementById('waterAmountDisplay').textContent='—';
+    }, 1400);
+  } catch(e) { showToast('送信エラーです。もう一度お試しください', true); }
+  finally { btn.textContent='仕込みを記録する'; btn.disabled=false; }
+}
+
+function showToast(msg, isErr=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (isErr ? ' err' : '');
+  setTimeout(() => t.className = '', 3000);
+}
+</script>
+</body>
+</html>
