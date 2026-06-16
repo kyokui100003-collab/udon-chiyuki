@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>千幸 評価入力</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+  :root {
+    --bg:      #f5f5f5;
+    --white:   #ffffff;
+    --ink:     #1c1c1c;
+    --sub:     #555555;
+    --border:  #d0d0d0;
+    --active:  #2563EB;
+    --ok:      #16a34a;
+    --warn:    #dc2626;
+    --nav-bg:  #1c1c1c;
+    --nav-act: #f59e0b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 17px;
+    line-height: 1.5;
+    padding-bottom: 80px;
+  }
+
+  header {
+    background: var(--nav-bg);
+    color: #fff;
+    padding: 18px 20px 14px;
+  }
+  header h1 { font-size: 20px; font-weight: 700; letter-spacing: 0.06em; }
+  header p  { font-size: 13px; color: var(--nav-act); margin-top: 2px; }
+
+  nav {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--nav-bg);
+    display: flex;
+    border-top: 1px solid #333;
+  }
+  nav a {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 52px;
+    font-size: 15px; font-weight: 500;
+    text-decoration: none; color: #888;
+    letter-spacing: 0.04em;
+  }
+  nav a.active { color: var(--nav-act); border-bottom: 3px solid var(--nav-act); }
+
+  main { max-width: 520px; margin: 0 auto; padding: 20px 16px; }
+
+  .block {
+    background: var(--white);
+    border-radius: 12px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+  .block-head {
+    background: #f0f0f0;
+    padding: 10px 16px;
+    font-size: 13px; font-weight: 700;
+    color: var(--sub);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  .block-body { padding: 16px; }
+
+  .field { margin-bottom: 16px; }
+  .field:last-child { margin-bottom: 0; }
+  .field-label { display: block; font-size: 14px; font-weight: 700; color: var(--sub); margin-bottom: 6px; }
+
+  input[type="date"], select, textarea {
+    width: 100%; min-height: 52px;
+    background: #fafafa;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 18px; font-weight: 500;
+    color: var(--ink);
+    appearance: none; -webkit-appearance: none;
+    outline: none; transition: border-color 0.15s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--active); background: #fff; }
+  textarea { min-height: 80px; resize: vertical; font-size: 16px; }
+
+  /* ── 仕込みカード ── */
+  .card-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .shimikomi-card {
+    background: var(--white);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .shimikomi-card:active { background: #f0f7ff; }
+  .shimikomi-card.selected { border-color: var(--active); background: #eff6ff; }
+
+  .card-date { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+  .card-recipe {
+    font-size: 14px; color: var(--sub); line-height: 1.8;
+  }
+  .card-badge {
+    display: inline-block;
+    margin-top: 8px;
+    background: #e0e7ff;
+    color: #3730a3;
+    font-size: 13px; font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+
+  .empty-msg {
+    text-align: center; color: var(--sub);
+    font-size: 15px; padding: 24px 0; line-height: 2;
+  }
+
+  /* ── 選択済みサマリー ── */
+  .summary-box {
+    background: #eff6ff;
+    border: 2px solid #93c5fd;
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .summary-date { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  .summary-detail { font-size: 14px; color: #1e40af; line-height: 1.8; }
+  .change-link {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 14px; font-weight: 700;
+    color: var(--active);
+    text-decoration: underline;
+    cursor: pointer;
+    background: none; border: none; padding: 0;
+  }
+
+  /* ── 天気 ── */
+  .weather-box {
+    background: #f8faff;
+    border: 2px solid #c7d9f8;
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .weather-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 0;
+  }
+  .weather-row + .weather-row { border-top: 1px solid #e0eaff; }
+  .wkey { font-size: 14px; color: var(--sub); }
+  .wval { font-size: 22px; font-weight: 700; color: #1e40af; }
+  .wfetch { text-align: center; color: var(--sub); font-size: 14px; padding: 8px 0; }
+
+  /* ── 総合評価ボタン ── */
+  .hyoka-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .hyoka-btn {
+    min-height: 70px;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    background: var(--white);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 16px; font-weight: 700;
+    color: var(--sub);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 4px;
+    transition: all 0.15s;
+    line-height: 1.3;
+    text-align: center;
+  }
+  .hyoka-btn:active { transform: scale(0.96); }
+  .hyoka-btn .hb-icon { font-size: 22px; }
+
+  .hyoka-btn.sel-kaizen { background: #fef2f2; border-color: var(--warn);  color: var(--warn);  }
+  .hyoka-btn.sel-futsuu { background: #f0fdf4; border-color: #16a34a;      color: #15803d;      }
+  .hyoka-btn.sel-saikou { background: #fffbeb; border-color: #d97706;      color: #b45309;      }
+
+  /* ── 硬さボタン ── */
+  #katasa-section { display: none; }
+  #katasa-section.show { display: block; animation: fadeIn 0.2s ease; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+
+  .katasa-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .katasa-btn {
+    min-height: 64px;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    background: var(--white);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 16px; font-weight: 700;
+    color: var(--sub);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .katasa-btn:active { transform: scale(0.96); }
+  .katasa-btn.sel { background: #fef2f2; border-color: var(--warn); color: var(--warn); }
+
+  /* ── 送信ボタン ── */
+  .btn-submit {
+    display: block; width: 100%; min-height: 62px;
+    background: var(--ok);
+    color: #fff; border: none; border-radius: 14px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 19px; font-weight: 700; letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    box-shadow: 0 3px 10px rgba(22,163,74,0.35);
+  }
+  .btn-submit:active { background: #15803d; transform: scale(0.98); }
+  .btn-submit:disabled { background: #9ca3af; box-shadow: none; }
+
+
+  /* ── 最新仕込みカード ── */
+  .shimikomi-card.newest {
+    border-color: #dc2626;
+    background: #fff8f8;
+  }
+  .new-badge {
+    display: inline-block;
+    background: #dc2626;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 20px;
+    margin-left: 8px;
+    letter-spacing: 0.05em;
+    vertical-align: middle;
+  }
+  #toast {
+    position: fixed; bottom: 28px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--ok); color: #fff;
+    padding: 14px 28px; border-radius: 30px;
+    font-size: 16px; font-weight: 700;
+    opacity: 0; transition: all 0.3s;
+    pointer-events: none; white-space: nowrap;
+    z-index: 200; box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  #toast.err  { background: var(--warn); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>千幸　評価入力</h1>
+  <p>さぬきうどん千幸　東川町</p>
+</header>
+
+<nav>
+  <a href="index.html">📋 仕込み記録</a>
+  <a href="hyoka.html" class="active">⭐ 評価入力</a>
+  <a href="kiroku.html">📖 記録閲覧</a>
+</nav>
+
+<main>
+
+  <!-- STEP 1: 仕込みを選ぶ -->
+  <div id="step1">
+    <div class="block">
+      <div class="block-head">① 評価する仕込みを選んでください</div>
+      <div class="block-body">
+        <div class="card-list" id="shimikomiList">
+          <div class="wfetch">読み込み中…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2: 評価フォーム -->
+  <div id="step2" style="display:none;">
+
+    <!-- 選択中の仕込み -->
+    <div class="block">
+      <div class="block-head">① 選択中の仕込み</div>
+      <div class="block-body">
+        <div class="summary-box" id="selectedSummary"></div>
+      </div>
+    </div>
+
+    <!-- 評価日 -->
+    <div class="block">
+      <div class="block-head">② 今日の日付（評価日）</div>
+      <div class="block-body">
+        <div class="field" style="margin-bottom:0">
+          <label class="field-label">日付</label>
+          <input type="date" id="hyokaDate">
+        </div>
+      </div>
+    </div>
+
+    <!-- 天気（自動） -->
+    <div class="block">
+      <div class="block-head">③ 今日の天気（自動取得）</div>
+      <div class="block-body">
+        <div class="weather-box" id="hyokaWeather">
+          <div class="wfetch">評価日を選ぶと自動で表示されます</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 総合評価 -->
+    <div class="block">
+      <div class="block-head">④ 麺の出来はどうでしたか？</div>
+      <div class="block-body">
+        <div class="hyoka-grid">
+          <button class="hyoka-btn" id="btn-kaizen" onclick="selectHyoka('kaizen')">
+            <span class="hb-icon">😟</span>要改善
+          </button>
+          <button class="hyoka-btn" id="btn-futsuu" onclick="selectHyoka('futsuu')">
+            <span class="hb-icon">🙂</span>いつも通り
+          </button>
+          <button class="hyoka-btn" id="btn-saikou" onclick="selectHyoka('saikou')">
+            <span class="hb-icon">🌟</span>最高
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 硬さ（要改善時のみ） -->
+    <div class="block" id="katasa-section">
+      <div class="block-head">⑤ 硬さはどちらでしたか？</div>
+      <div class="block-body">
+        <div class="katasa-grid">
+          <button class="katasa-btn" id="k-kanari_yawa" onclick="selectKatasa('kanari_yawa')">かなり<br>柔らかい</button>
+          <button class="katasa-btn" id="k-yaya_yawa"   onclick="selectKatasa('yaya_yawa')">やや<br>柔らかい</button>
+          <button class="katasa-btn" id="k-yaya_kata"   onclick="selectKatasa('yaya_kata')">やや<br>硬い</button>
+          <button class="katasa-btn" id="k-kanari_kata" onclick="selectKatasa('kanari_kata')">かなり<br>硬い</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- メモ -->
+    <div class="block">
+      <div class="block-head">メモ（任意）</div>
+      <div class="block-body">
+        <textarea id="hyokaMemo" placeholder="気になったことを自由に書いてください"></textarea>
+      </div>
+    </div>
+
+    <button class="btn-submit" id="hyokaSubmitBtn" onclick="submitHyoka()">
+      評価を記録する
+    </button>
+
+  </div>
+</main>
+
+<div id="toast"></div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbycFZCVpdYE7GQE4OlPZjZsD3z47ziV-U5uZmLlypqVNxiRLzR9Q5yQ38OxYTMdZ1bIrQ/exec';
+const HIGASHIKAWA = { lat: 43.695, lon: 142.483 };
+
+let selectedShimikomi = null;
+let selectedHyoka = null;
+let selectedKatasa = null;
+
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('hyokaDate').value = formatDate(new Date());
+  document.getElementById('hyokaDate').addEventListener('change', fetchHyokaWeather);
+  loadShimikomiList();
+  fetchHyokaWeather();
+});
+
+function formatDate(d) { return d.toISOString().split('T')[0]; }
+
+async function loadShimikomiList() {
+  const list = document.getElementById('shimikomiList');
+  try {
+    const data = await (await fetch(`${GAS_URL}?action=getShimikomiList`)).json();
+    if (!data || data.length === 0) {
+      list.innerHTML = '<div class="empty-msg">仕込み記録がまだありません。<br>先に「仕込み記録」から入力してください。</div>';
+      return;
+    }
+    list.innerHTML = '';
+    data.forEach((item, idx) => list.appendChild(buildCard(item, idx === 0)));
+  } catch(e) {
+    list.innerHTML = '';
+    getDemoData().forEach((item, idx) => list.appendChild(buildCard(item, idx === 0)));
+  }
+}
+
+function getDemoData() {
+  return [
+    { id:'s001', date:'2025年6月14日', time:'18:10', w1:3600, w2:2000, w3:400, waterRate:47, saltRate:14, evalCount:2 },
+    { id:'s002', date:'2025年6月12日', time:'06:00', w1:3600, w2:2000, w3:400, waterRate:46, saltRate:14, evalCount:0 },
+    { id:'s003', date:'2025年6月10日', time:'18:05', w1:3000, w2:2400, w3:600, waterRate:48, saltRate:15, evalCount:4 },
+  ];
+}
+
+function buildCard(item) {
+  const card = document.createElement('div');
+  card.className = 'shimikomi-card';
+  card.onclick = () => selectShimikomi(item, card);
+  const evalCount = item.evalCount || 0;
+  card.innerHTML = `
+    <div class="card-date">📅 ${item.date}　${item.time}</div>
+    <div class="card-recipe">
+      一番粉 <b>${item.w1}g</b>　舞雪 <b>${item.w2}g</b>　夢 <b>${item.w3}g</b><br>
+      加水 <b>${item.waterRate}%</b>　塩分 <b>${item.saltRate}%</b>
+    </div>
+    <span class="card-badge">評価 ${evalCount}回記録済み</span>`;
+  return card;
+}
+
+function selectShimikomi(item, card) {
+  selectedShimikomi = item;
+  selectedHyoka = null;
+  selectedKatasa = null;
+  document.querySelectorAll('.shimikomi-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+
+  const envParts = [
+    item.roomTemp ? `室内温度 ${item.roomTemp}℃` : '',
+    item.roomHum  ? `室内湿度 ${item.roomHum}%`  : '',
+    (item.outsideTemp !== '' && item.outsideTemp != null) ? `外気温 ${item.outsideTemp}℃` : '',
+    (item.outsideHum  !== '' && item.outsideHum  != null) ? `外湿度 ${item.outsideHum}%`  : '',
+  ].filter(Boolean).join('　');
+
+  document.getElementById('selectedSummary').innerHTML = `
+    <div class="summary-date">📅 ${item.date}　${item.time}</div>
+    <div class="summary-detail">
+      一番粉 <b>${item.w1}g</b>　舞雪 <b>${item.w2}g</b>　夢 <b>${item.w3}g</b><br>
+      加水 <b>${item.waterRate}%</b>　塩分 <b>${item.saltRate}%</b>
+      ${envParts ? `<br><span style="font-size:13px;color:#4B5563;">${envParts}</span>` : ''}
+      ${item.memo ? `<br><span style="font-size:13px;color:#6B7280;">メモ：${item.memo}</span>` : ''}
+    </div>
+    <button class="change-link" onclick="backToStep1()">▲ 別の仕込みを選び直す</button>`;
+
+  // リセット
+  ['kaizen','futsuu','saikou'].forEach(v => document.getElementById('btn-'+v).className='hyoka-btn');
+  document.querySelectorAll('.katasa-btn').forEach(b => b.className='katasa-btn');
+  document.getElementById('katasa-section').className='block';
+
+  document.getElementById('step2').style.display = 'block';
+  setTimeout(() => document.getElementById('step2').scrollIntoView({ behavior:'smooth', block:'start' }), 50);
+}
+
+function backToStep1() {
+  document.getElementById('step2').style.display = 'none';
+  selectedShimikomi = null;
+  document.querySelectorAll('.shimikomi-card').forEach(c => c.classList.remove('selected'));
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function fetchHyokaWeather() {
+  const date = document.getElementById('hyokaDate').value;
+  if (!date) return;
+  const block = document.getElementById('hyokaWeather');
+  block.innerHTML = '<div class="wfetch">取得中…</div>';
+
+  // 過去日はarchive API、今日以降はforecast APIを使い分ける
+  const today = new Date().toISOString().split('T')[0];
+  const isHistory = date < today;
+  const baseUrl = isHistory
+    ? `https://archive-api.open-meteo.com/v1/archive?latitude=${HIGASHIKAWA.lat}&longitude=${HIGASHIKAWA.lon}&daily=temperature_2m_max,temperature_2m_min,relative_humidity_2m_mean&timezone=Asia%2FTokyo&start_date=${date}&end_date=${date}`
+    : `https://api.open-meteo.com/v1/forecast?latitude=${HIGASHIKAWA.lat}&longitude=${HIGASHIKAWA.lon}&daily=temperature_2m_max,temperature_2m_min,relative_humidity_2m_mean&timezone=Asia%2FTokyo&start_date=${date}&end_date=${date}`;
+
+  try {
+    const data = await (await fetch(baseUrl)).json();
+    const maxT = data.daily.temperature_2m_max[0];
+    const minT = data.daily.temperature_2m_min[0];
+    const hum  = data.daily.relative_humidity_2m_mean[0];
+    window._hw = { maxT, minT, hum };
+    const src = isHistory ? '（実測値）' : '（予報）';
+    block.innerHTML = `
+      <div class="weather-row">
+        <span class="wkey">🌡 最高気温 ${src}</span>
+        <span class="wval">${maxT != null ? maxT.toFixed(1) : '—'} ℃</span>
+      </div>
+      <div class="weather-row">
+        <span class="wkey">🌡 最低気温 ${src}</span>
+        <span class="wval">${minT != null ? minT.toFixed(1) : '—'} ℃</span>
+      </div>
+      <div class="weather-row">
+        <span class="wkey">💧 平均湿度 ${src}</span>
+        <span class="wval">${hum != null ? Math.round(hum) : '—'} %</span>
+      </div>`;
+  } catch(e) {
+    block.innerHTML = '<div class="wfetch">⚠️ 取得できませんでした</div>';
+    window._hw = null;
+  }
+}
+
+function selectHyoka(val) {
+  selectedHyoka = val;
+  ['kaizen','futsuu','saikou'].forEach(v => {
+    document.getElementById('btn-'+v).className = 'hyoka-btn' + (v===val ? ' sel-'+v : '');
+  });
+  const ks = document.getElementById('katasa-section');
+  if (val === 'kaizen') {
+    ks.className = 'block show';
+  } else {
+    ks.className = 'block';
+    selectedKatasa = null;
+    document.querySelectorAll('.katasa-btn').forEach(b => b.className='katasa-btn');
+  }
+}
+
+function selectKatasa(val) {
+  selectedKatasa = val;
+  document.querySelectorAll('.katasa-btn').forEach(b => b.className='katasa-btn');
+  document.getElementById('k-'+val).className = 'katasa-btn sel';
+}
+
+async function submitHyoka() {
+  if (!selectedShimikomi) { showToast('仕込みを選んでください', true); return; }
+  if (!selectedHyoka)     { showToast('出来の評価を選んでください', true); return; }
+  if (selectedHyoka === 'kaizen' && !selectedKatasa) { showToast('硬さを選んでください', true); return; }
+
+  const date = document.getElementById('hyokaDate').value;
+  const memo = document.getElementById('hyokaMemo').value;
+  const w = window._hw || {};
+  const payload = {
+    action:'hyoka',
+    shimikomiId: selectedShimikomi.id,
+    shimikomiDate: selectedShimikomi.date,
+    hyokaDate: date,
+    hyoka: selectedHyoka,
+    katasa: selectedKatasa || '',
+    maxTemp: w.maxT ?? '', minTemp: w.minT ?? '', avgHum: w.hum ?? '',
+    memo, submittedAt: new Date().toISOString()
+  };
+
+  const btn = document.getElementById('hyokaSubmitBtn');
+  btn.textContent = '記録中…'; btn.disabled = true;
+  try {
+    await fetch(GAS_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    showToast('✅ 評価を記録しました');
+    setTimeout(() => {
+      document.getElementById('step2').style.display = 'none';
+      document.getElementById('hyokaMemo').value = '';
+      selectedShimikomi = null; selectedHyoka = null; selectedKatasa = null;
+      loadShimikomiList();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 1400);
+  } catch(e) { showToast('送信エラーです。もう一度お試しください', true); }
+  finally { btn.textContent='評価を記録する'; btn.disabled=false; }
+}
+
+function showToast(msg, isErr=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'show' + (isErr ? ' err' : '');
+  setTimeout(() => t.className='', 3200);
+}
+</script>
+</body>
+</html>
