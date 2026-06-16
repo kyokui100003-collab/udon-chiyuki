@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>千幸 記録閲覧</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+  :root {
+    --bg:      #f5f5f5;
+    --white:   #ffffff;
+    --ink:     #1c1c1c;
+    --sub:     #555555;
+    --border:  #d0d0d0;
+    --nav-bg:  #1c1c1c;
+    --nav-act: #f59e0b;
+    --blue:    #2563eb;
+    --lblue:   #eff6ff;
+    --green:   #15803d;
+    --lgreen:  #f0fdf4;
+    --gold:    #b45309;
+    --lgold:   #fffbeb;
+    --red:     #dc2626;
+    --lred:    #fef2f2;
+    --purple:  #7c3aed;
+    --lpurple: #f5f3ff;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 16px;
+    padding-bottom: 80px;
+  }
+
+  header {
+    background: var(--nav-bg);
+    color: #fff;
+    padding: 18px 20px 14px;
+  }
+  header h1 { font-size: 20px; font-weight: 700; letter-spacing: 0.06em; }
+  header p  { font-size: 13px; color: var(--nav-act); margin-top: 2px; }
+
+  nav {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--nav-bg);
+    display: flex;
+    border-top: 1px solid #333;
+    overflow-x: auto;
+  }
+  nav a {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 52px; min-width: 80px;
+    font-size: 13px; font-weight: 500;
+    text-decoration: none; color: #888;
+    white-space: nowrap; padding: 0 8px;
+  }
+  nav a.active { color: var(--nav-act); border-bottom: 3px solid var(--nav-act); }
+
+  main { max-width: 560px; margin: 0 auto; padding: 20px 16px; }
+
+  /* ── ブロック ── */
+  .block {
+    background: var(--white);
+    border-radius: 12px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+  .block-head {
+    background: #f0f0f0;
+    padding: 10px 16px;
+    font-size: 13px; font-weight: 700; color: var(--sub);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  .block-body { padding: 16px; }
+
+  /* ── フィルターバー ── */
+  .filter-bar {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 4px;
+  }
+  .filter-bar select {
+    flex: 1; min-width: 120px;
+    min-height: 48px;
+    background: #fafafa;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 16px; font-weight: 500; color: var(--ink);
+    appearance: none; -webkit-appearance: none;
+  }
+  .filter-bar select:focus { outline: none; border-color: var(--blue); }
+
+  .filter-count {
+    font-size: 13px; color: var(--sub);
+    margin-top: 8px;
+  }
+
+  /* ── サマリーカード群 ── */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .summary-card {
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+  }
+  .sc-num  { font-size: 32px; font-weight: 700; line-height: 1; margin-bottom: 4px; }
+  .sc-label{ font-size: 13px; color: var(--sub); }
+
+  .sc-total  { background: var(--lblue);   }
+  .sc-saikou { background: var(--lgold);   }
+  .sc-futsuu { background: var(--lgreen);  }
+  .sc-kaizen { background: var(--lred);    }
+
+  .sc-total  .sc-num { color: var(--blue);  }
+  .sc-saikou .sc-num { color: var(--gold);  }
+  .sc-futsuu .sc-num { color: var(--green); }
+  .sc-kaizen .sc-num { color: var(--red);   }
+
+  /* サマリー補足 */
+  .summary-note {
+    margin-top: 12px;
+    background: var(--lgold);
+    border-left: 4px solid var(--gold);
+    border-radius: 0 8px 8px 0;
+    padding: 10px 14px;
+    font-size: 14px;
+    color: var(--ink);
+    line-height: 1.6;
+  }
+  .summary-note.none {
+    background: var(--bg);
+    border-color: var(--border);
+    color: var(--sub);
+  }
+
+  /* ── 仕込みカード ── */
+  .shimikomi-card {
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    transition: border-color 0.15s;
+  }
+  .shimikomi-card.saikou-card { border-color: #fcd34d; }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    background: var(--white);
+    cursor: pointer;
+    user-select: none;
+  }
+  .card-header:active { background: #f9f9f9; }
+
+  .card-left {}
+  .card-date { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+  .card-recipe { font-size: 13px; color: var(--sub); line-height: 1.8; }
+
+  .card-right { text-align: right; flex-shrink: 0; margin-left: 12px; }
+  .card-arrow { font-size: 18px; color: var(--border); margin-top: 4px; transition: transform 0.2s; }
+  .card-arrow.open { transform: rotate(90deg); }
+
+  /* 評価バッジ群 */
+  .badge-row { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; margin-bottom: 4px; }
+  .badge {
+    display: inline-block;
+    font-size: 12px; font-weight: 700;
+    padding: 3px 10px; border-radius: 20px;
+  }
+  .badge-saikou { background: var(--lgold);  color: var(--gold);  }
+  .badge-futsuu { background: var(--lgreen); color: var(--green); }
+  .badge-kaizen { background: var(--lred);   color: var(--red);   }
+  .badge-count  { background: #f0f0f0; color: var(--sub); }
+  .badge-star   { background: #fef3c7; color: #92400e; font-size: 14px; }
+
+  /* 展開パネル */
+  .card-detail {
+    display: none;
+    border-top: 1px solid var(--border);
+    background: #fafafa;
+    padding: 14px 16px;
+  }
+  .card-detail.open { display: block; }
+
+  .detail-section { margin-bottom: 14px; }
+  .detail-title {
+    font-size: 12px; font-weight: 700; color: var(--sub);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .detail-item {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+  }
+  .di-label { font-size: 11px; color: var(--sub); margin-bottom: 2px; }
+  .di-val   { font-size: 17px; font-weight: 700; color: var(--ink); }
+
+  /* 評価リスト */
+  .hyoka-list { display: flex; flex-direction: column; gap: 6px; }
+  .hyoka-row {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .hyoka-row.saikou { border-color: #fcd34d; background: var(--lgold); }
+  .hyoka-row.kaizen { border-color: #fca5a5; background: var(--lred);  }
+  .hyoka-row.futsuu { border-color: #86efac; background: var(--lgreen);}
+
+  .hr-date   { font-size: 14px; font-weight: 700; }
+  .hr-badge  { font-size: 14px; font-weight: 700; }
+  .hr-katasa { font-size: 12px; color: var(--red); margin-top: 2px; }
+  .hr-weather{ font-size: 12px; color: var(--sub); }
+
+  .no-hyoka {
+    text-align: center; color: var(--sub);
+    font-size: 14px; padding: 12px 0;
+  }
+
+  /* ── ローディング・空 ── */
+  .loading { text-align: center; color: var(--sub); padding: 32px 0; font-size: 15px; }
+  .empty   { text-align: center; color: var(--sub); padding: 24px 0; font-size: 14px; line-height: 2; }
+
+  /* ── トースト ── */
+  #toast {
+    position: fixed; bottom: 28px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--green); color: #fff;
+    padding: 12px 24px; border-radius: 30px;
+    font-size: 15px; font-weight: 700;
+    opacity: 0; transition: all 0.3s;
+    pointer-events: none; white-space: nowrap;
+    z-index: 200;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>千幸　記録閲覧</h1>
+  <p>さぬきうどん千幸　東川町</p>
+</header>
+
+<nav>
+  <a href="index.html">📋 仕込み記録</a>
+  <a href="hyoka.html">⭐ 評価入力</a>
+  <a href="kiroku.html" class="active">📖 記録閲覧</a>
+</nav>
+
+<main>
+
+  <!-- フィルター -->
+  <div class="block">
+    <div class="block-head">フィルター</div>
+    <div class="block-body">
+      <div class="filter-bar">
+        <select id="monthFilter" onchange="applyFilter()">
+          <option value="">すべての月</option>
+        </select>
+        <select id="hyokaFilter" onchange="applyFilter()">
+          <option value="">すべての評価</option>
+          <option value="saikou">🌟 最高のみ</option>
+          <option value="futsuu">🙂 いつも通りのみ</option>
+          <option value="kaizen">😟 要改善のみ</option>
+          <option value="none">評価なし</option>
+        </select>
+      </div>
+      <div class="filter-count" id="filterCount"></div>
+    </div>
+  </div>
+
+  <!-- サマリー -->
+  <div class="block">
+    <div class="block-head">サマリー</div>
+    <div class="block-body">
+      <div class="summary-grid">
+        <div class="summary-card sc-total">
+          <div class="sc-num" id="s-total">—</div>
+          <div class="sc-label">仕込み回数</div>
+        </div>
+        <div class="summary-card sc-saikou">
+          <div class="sc-num" id="s-saikou">—</div>
+          <div class="sc-label">🌟 最高</div>
+        </div>
+        <div class="summary-card sc-futsuu">
+          <div class="sc-num" id="s-futsuu">—</div>
+          <div class="sc-label">🙂 いつも通り</div>
+        </div>
+        <div class="summary-card sc-kaizen">
+          <div class="sc-num" id="s-kaizen">—</div>
+          <div class="sc-label">😟 要改善</div>
+        </div>
+      </div>
+      <div class="summary-note none" id="summaryNote">読み込み中…</div>
+    </div>
+  </div>
+
+  <!-- 記録一覧 -->
+  <div class="block">
+    <div class="block-head">仕込み記録一覧</div>
+    <div class="block-body" id="recordList">
+      <div class="loading">読み込み中…</div>
+    </div>
+  </div>
+
+</main>
+
+<div id="toast"></div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbycFZCVpdYE7GQE4OlPZjZsD3z47ziV-U5uZmLlypqVNxiRLzR9Q5yQ38OxYTMdZ1bIrQ/exec';
+
+let allShimikomi = [];
+let allHyoka     = [];
+let filteredData = [];
+
+// ── 初期化 ──
+window.addEventListener('DOMContentLoaded', loadAll);
+
+async function loadAll() {
+  try {
+    const [shimRes, hyokaRes] = await Promise.all([
+      fetch(GAS_URL + '?action=getShimikomiList'),
+      fetch(GAS_URL + '?action=getHyokaList'),
+    ]);
+    allShimikomi = await shimRes.json();
+    allHyoka     = await hyokaRes.json();
+  } catch(e) {
+    // デモデータ
+    allShimikomi = getDemoShimikomi();
+    allHyoka     = getDemoHyoka();
+  }
+
+  buildMonthFilter();
+  applyFilter();
+}
+
+// ── 月フィルター生成 ──
+function buildMonthFilter() {
+  const months = [...new Set(allShimikomi.map(s => s.date.slice(0,7)))].sort().reverse();
+  const sel = document.getElementById('monthFilter');
+  months.forEach(m => {
+    const o = document.createElement('option');
+    o.value = m;
+    const [y, mo] = m.split('-');
+    o.textContent = y + '年' + parseInt(mo) + '月';
+    sel.appendChild(o);
+  });
+}
+
+// ── フィルター適用 ──
+function applyFilter() {
+  const month  = document.getElementById('monthFilter').value;
+  const hyoka  = document.getElementById('hyokaFilter').value;
+
+  // 仕込みIDごとの評価まとめ
+  const hyokaMap = {};
+  allHyoka.forEach(h => {
+    if (!hyokaMap[h.shimikomiId]) hyokaMap[h.shimikomiId] = [];
+    hyokaMap[h.shimikomiId].push(h);
+  });
+
+  filteredData = allShimikomi.filter(s => {
+    // 月フィルター
+    if (month && !s.date.startsWith(month)) return false;
+
+    // 評価フィルター
+    if (hyoka) {
+      const evals = hyokaMap[s.id] || [];
+      if (hyoka === 'none') return evals.length === 0;
+      const has = evals.some(e => e.hyoka === hyoka);
+      if (!has) return false;
+    }
+    return true;
+  });
+
+  updateSummary(hyokaMap);
+  renderList(hyokaMap);
+
+  document.getElementById('filterCount').textContent =
+    filteredData.length + ' 件の仕込み記録';
+}
+
+// ── サマリー更新 ──
+function updateSummary(hyokaMap) {
+  const total = filteredData.length;
+  let saikouCount = 0, futsuuCount = 0, kaizenCount = 0;
+  let bestRecipe = null, bestDate = null;
+
+  filteredData.forEach(s => {
+    const evals = hyokaMap[s.id] || [];
+    const hasSaikou = evals.some(e => e.hyoka === 'saikou');
+    const hasFutsuu = evals.some(e => e.hyoka === 'futsuu');
+    const hasKaizen = evals.some(e => e.hyoka === 'kaizen');
+    if (hasSaikou) { saikouCount++; if (!bestRecipe) { bestRecipe = s; bestDate = s.date; } }
+    if (hasFutsuu) futsuuCount++;
+    if (hasKaizen) kaizenCount++;
+  });
+
+  document.getElementById('s-total').textContent  = total;
+  document.getElementById('s-saikou').textContent = saikouCount;
+  document.getElementById('s-futsuu').textContent = futsuuCount;
+  document.getElementById('s-kaizen').textContent = kaizenCount;
+
+  const noteEl = document.getElementById('summaryNote');
+  if (bestRecipe) {
+    const rate = total > 0 ? Math.round(saikouCount / total * 100) : 0;
+    noteEl.className = 'summary-note';
+    noteEl.innerHTML =
+      `🌟 <b>最高評価の直近仕込み：${bestDate}</b><br>` +
+      `一番粉 ${bestRecipe.w1}g　舞雪 ${bestRecipe.w2}g　夢 ${bestRecipe.w3}g<br>` +
+      `加水 ${bestRecipe.waterRate}%　塩分 ${bestRecipe.saltRate}%<br>` +
+      `（最高評価率：${rate}%）`;
+  } else if (total === 0) {
+    noteEl.className = 'summary-note none';
+    noteEl.textContent = '該当する記録がありません。';
+  } else {
+    noteEl.className = 'summary-note none';
+    noteEl.textContent = 'まだ「最高」評価の記録がありません。';
+  }
+}
+
+// ── 一覧レンダリング ──
+function renderList(hyokaMap) {
+  const el = document.getElementById('recordList');
+  if (filteredData.length === 0) {
+    el.innerHTML = '<div class="empty">該当する記録がありません。</div>';
+    return;
+  }
+  el.innerHTML = '';
+  filteredData.forEach(s => {
+    const evals = hyokaMap[s.id] || [];
+    el.appendChild(buildCard(s, evals));
+  });
+}
+
+// ── カード構築 ──
+function buildCard(s, evals) {
+  const hasSaikou = evals.some(e => e.hyoka === 'saikou');
+  const hasFutsuu = evals.some(e => e.hyoka === 'futsuu');
+  const hasKaizen = evals.some(e => e.hyoka === 'kaizen');
+
+  const wrap = document.createElement('div');
+  wrap.className = 'shimikomi-card' + (hasSaikou ? ' saikou-card' : '');
+
+  // バッジ
+  let badges = '';
+  if (hasSaikou) badges += '<span class="badge badge-saikou">🌟 最高あり</span>';
+  if (hasFutsuu) badges += '<span class="badge badge-futsuu">🙂 いつも通りあり</span>';
+  if (hasKaizen) badges += '<span class="badge badge-kaizen">😟 要改善あり</span>';
+  if (evals.length === 0) badges += '<span class="badge badge-count">未評価</span>';
+  else badges += `<span class="badge badge-count">評価${evals.length}回</span>`;
+
+  wrap.innerHTML = `
+    <div class="card-header" onclick="toggleDetail('${s.id}')">
+      <div class="card-left">
+        <div class="card-date">📅 ${s.date}　${s.time}</div>
+        <div class="card-recipe">
+          一番粉 <b>${s.w1}g</b>　舞雪 <b>${s.w2}g</b>　夢 <b>${s.w3}g</b><br>
+          加水 <b>${s.waterRate}%</b>　塩分 <b>${s.saltRate}%</b>
+        </div>
+      </div>
+      <div class="card-right">
+        <div class="badge-row">${badges}</div>
+        <div class="card-arrow" id="arrow-${s.id}">▶</div>
+      </div>
+    </div>
+    <div class="card-detail" id="detail-${s.id}">
+      ${buildDetail(s, evals)}
+    </div>`;
+
+  return wrap;
+}
+
+// ── 詳細パネル ──
+function buildDetail(s, evals) {
+  const totalG = s.totalG || ((s.w1||0) + (s.w2||0) + (s.w3||0));
+  const waterMl = s.waterMl || (totalG > 0 && s.waterRate
+    ? Math.round(totalG * parseFloat(s.waterRate) / 100) : null);
+
+  const diItem = (label, val, unit='') => val !== '' && val != null
+    ? `<div class="detail-item"><div class="di-label">${label}</div><div class="di-val">${val}${unit ? ' '+unit : ''}</div></div>`
+    : '';
+
+  const envHTML = `
+    <div class="detail-section">
+      <div class="detail-title">仕込み時の環境</div>
+      <div class="detail-grid">
+        ${diItem('室内温度', s.roomTemp, '℃')}
+        ${diItem('室内湿度', s.roomHum, '%')}
+        ${diItem('外気温', s.outsideTemp !== '' && s.outsideTemp != null ? s.outsideTemp : null, '℃')}
+        ${diItem('外湿度', s.outsideHum !== '' && s.outsideHum != null ? s.outsideHum : null, '%')}
+      </div>
+    </div>`;
+
+  const memoHTML = s.memo ? `
+    <div class="detail-section">
+      <div class="detail-title">メモ</div>
+      <div style="font-size:14px;color:var(--ink);line-height:1.7;padding:6px 0;">${s.memo}</div>
+    </div>` : '';
+
+  let hyokaHTML = '';
+  if (evals.length === 0) {
+    hyokaHTML = '<div class="no-hyoka">まだ評価が入力されていません</div>';
+  } else {
+    hyokaHTML = evals.map(e => {
+      const cls = e.hyoka === 'saikou' ? 'saikou' : e.hyoka === 'kaizen' ? 'kaizen' : 'futsuu';
+      const label = { saikou:'🌟 最高', futsuu:'🙂 いつも通り', kaizen:'😟 要改善' }[e.hyoka] || e.hyoka;
+      const weather = [
+        e.maxTemp != null && e.maxTemp !== '' ? `最高 ${e.maxTemp}℃` : '',
+        e.minTemp != null && e.minTemp !== '' ? `最低 ${e.minTemp}℃` : '',
+        e.avgHum  != null && e.avgHum  !== '' ? `湿度 ${e.avgHum}%`  : '',
+      ].filter(Boolean).join('　');
+      return `
+        <div class="hyoka-row ${cls}">
+          <div>
+            <div class="hr-date">${e.hyokaDate}</div>
+            ${e.katasa ? `<div class="hr-katasa">硬さ：${e.katasa}</div>` : ''}
+            ${weather  ? `<div class="hr-weather">評価日の天気：${weather}</div>` : ''}
+            ${e.memo   ? `<div class="hr-weather">メモ：${e.memo}</div>` : ''}
+          </div>
+          <div class="hr-badge">${label}</div>
+        </div>`;
+    }).join('');
+  }
+
+  return `
+    <div class="detail-section">
+      <div class="detail-title">配合</div>
+      <div class="detail-grid">
+        ${diItem('一番粉', s.w1, 'g')}
+        ${diItem('舞雪', s.w2, 'g')}
+        ${diItem('夢', s.w3, 'g')}
+        ${diItem('合計', totalG, 'g')}
+        ${diItem('加水率', s.waterRate, '%')}
+        ${diItem('加水量', waterMl, 'ml')}
+        ${diItem('塩分率', s.saltRate, '%')}
+      </div>
+    </div>
+    ${envHTML}
+    ${memoHTML}
+    <div class="detail-section">
+      <div class="detail-title">評価記録（${evals.length}回）</div>
+      <div class="hyoka-list">${hyokaHTML}</div>
+    </div>`;
+}
+
+// ── 展開トグル ──
+function toggleDetail(id) {
+  const detail = document.getElementById('detail-' + id);
+  const arrow  = document.getElementById('arrow-'  + id);
+  const isOpen = detail.classList.contains('open');
+  detail.classList.toggle('open', !isOpen);
+  arrow.classList.toggle('open',  !isOpen);
+}
+
+// ── デモデータ ──
+function getDemoShimikomi() {
+  return [
+    { id:'s003', date:'2026-06-14', time:'18:00', w1:3600, w2:2000, w3:400, waterRate:47, saltRate:14, roomTemp:22.5, roomHum:68, outsideTemp:18.2, outsideHum:72, memo:'梅雨入り前、気温低め。粉の状態良好。' },
+    { id:'s002', date:'2026-06-10', time:'18:00', w1:3600, w2:2000, w3:400, waterRate:46, saltRate:14, roomTemp:21.0, roomHum:70, outsideTemp:16.5, outsideHum:75, memo:'' },
+    { id:'s001', date:'2026-06-07', time:'06:00', w1:3000, w2:2400, w3:600, waterRate:48, saltRate:15, roomTemp:19.5, roomHum:65, outsideTemp:14.0, outsideHum:68, memo:'朝仕込み。配合を少し変えてみた。' },
+  ];
+}
+function getDemoHyoka() {
+  return [
+    { shimikomiId:'s003', hyokaDate:'2026-06-15', hyoka:'saikou', katasa:'', maxTemp:20.1, minTemp:12.3, avgHum:65, memo:'のど越しが特に良かった' },
+    { shimikomiId:'s002', hyokaDate:'2026-06-11', hyoka:'futsuu', katasa:'', maxTemp:18.5, minTemp:11.0, avgHum:70, memo:'' },
+    { shimikomiId:'s002', hyokaDate:'2026-06-12', hyoka:'futsuu', katasa:'', maxTemp:19.2, minTemp:12.1, avgHum:68, memo:'' },
+    { shimikomiId:'s001', hyokaDate:'2026-06-08', hyoka:'kaizen', katasa:'やや硬い', maxTemp:17.0, minTemp:10.5, avgHum:72, memo:'少し硬めだった' },
+  ];
+}
+</script>
+</body>
+</html>
